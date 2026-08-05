@@ -96,7 +96,6 @@ ENV ACTINIA_RUNTIME_PACKAGES="\
     rsync \
     py3-shapely \
     py3-rasterio \
-    py3-scikit-learn \
     valkey-cli \
     zip \
     "
