@@ -46,7 +46,9 @@ COPY --from=grass /usr/local/grass/etc/colors/ /etc/colors/
 RUN pip3 install --upgrade pip six grass-session --ignore-installed six
 # RUN ln -s /usr/local/grass `grass --config path`
 RUN ln -s /usr/local/grass /usr/local/grass86
-RUN grass --tmp-project EPSG:4326 --exec g.version -rge && \
+RUN gdal-config --version && \
+    ldd /usr/local/grass86/bin/g.proj | grep libgdal && \
+    grass --tmp-project EPSG:4326 --exec g.version -rge && \
     pdal --version && \
     python3 --version
 
