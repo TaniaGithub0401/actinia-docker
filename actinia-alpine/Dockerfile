@@ -1,3 +1,5 @@
+ARG ALPINE_DEPENDENCIES_TAG=2026-08-14
+
 FROM alpine:3.24 as version
 RUN apk add git
 
@@ -5,11 +7,14 @@ COPY .git /src/actinia-docker/.git
 WORKDIR /src/actinia-docker
 RUN git describe --dirty --tags --long --first-parent > /actinia-docker-version.txt
 
-FROM mundialis/actinia:alpine-dependencies-2026-09-02 as base
+
+FROM mundialis/actinia:alpine-dependencies-${ALPINE_DEPENDENCIES_TAG} as base
 FROM osgeo/grass-gis:main-alpine as grass
 FROM mundialis/esa-snap:s1tbx-d08c6d7 as snap
 
-FROM base
+
+# Compatibility test stage
+FROM base as compatibility-test
 
 LABEL authors="Carmen Tawalika,Anika Bettge,Markus Neteler,Sören Gebbert"
 LABEL maintainer="tawalika@mundialis.de,weinmann@mundialis.de,neteler@mundialis.de"
@@ -43,14 +48,20 @@ COPY --from=grass /usr/local/grass* /usr/local/grass/
 COPY --from=grass /usr/lib/gdalplugins/*_GRASS* /usr/lib/gdalplugins/
 COPY --from=grass /usr/local/grass/etc/proj/ /etc/proj/
 COPY --from=grass /usr/local/grass/etc/colors/ /etc/colors/
+
 RUN pip3 install --upgrade pip six grass-session --ignore-installed six
 # RUN ln -s /usr/local/grass `grass --config path`
 RUN ln -s /usr/local/grass /usr/local/grass86
+
 RUN gdal-config --version && \
     ldd /usr/local/grass86/bin/g.proj | grep libgdal && \
     grass --tmp-project EPSG:4326 --exec g.version -rge && \
     pdal --version && \
     python3 --version
+
+
+# Full actinia image
+FROM compatibility-test as final
 
 # GRASS GIS addons installation
 # git clone various openEO plugins (local checkout due to non-standard repo structure)

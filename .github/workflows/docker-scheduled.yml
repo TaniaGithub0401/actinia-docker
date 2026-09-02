@@ -13,6 +13,10 @@ jobs:
   docker-alpine-dependencies:
     name: build and push dependency image
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -22,7 +26,8 @@ jobs:
         run: |
           date=`date -I`
           tag=${DOCKERHUB_REPOSITORY}:alpine-dependencies-$date
-          echo "tags=$tag" >> $GITHUB_OUTPUT
+          echo "date=$date" >> "$GITHUB_OUTPUT"
+          echo "tags=$tag" >> "$GITHUB_OUTPUT"
       - name: log
         run: echo ${{ steps.meta.outputs.tags }}
       - name: Set up QEMU
@@ -43,5 +48,42 @@ jobs:
           context: .
           tags: ${{ steps.meta.outputs.tags }}
           file: actinia-alpine/Dockerfile_alpine_dependencies
+      - name: Test compatibility with actinia-alpine
+        uses: docker/build-push-action@v7
+        with:
+          push: false
+          pull: true
+          context: .
+          file: actinia-alpine/Dockerfile
+          target: compatibility-test
+          build-args: |
+            ALPINE_DEPENDENCIES_TAG=${{ steps.meta.outputs.date }}
+      - name: Update alpine dependencies tag
+        id: update_tag
+        run: |
+          sed -i \
+            "s/^ARG ALPINE_DEPENDENCIES_TAG=.*/ARG ALPINE_DEPENDENCIES_TAG=${{ steps.meta.outputs.date }}/" \
+            actinia-alpine/Dockerfile
+
+          if git diff --quiet actinia-alpine/Dockerfile; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create pull request
+        if: steps.update_tag.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update alpine dependencies image tag"
+          title: "Update alpine dependencies image tag to ${{ steps.meta.outputs.date }}"
+          body: |
+            Updates the `alpine-dependencies` image tag to `${{ steps.meta.outputs.date }}`.
+
+            The new dependency image passed the compatibility test with
+            `osgeo/grass-gis:main-alpine`.
+          branch: "update-alpine-dependencies-${{ steps.meta.outputs.date }}"
+          base: main
+       
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo "${{ steps.docker_build.outputs.digest }}"
