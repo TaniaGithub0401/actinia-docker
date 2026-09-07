@@ -3,6 +3,12 @@ name: Test alpine dependency PR creation
 on:
   workflow_dispatch:
 
+  push:
+    branches:
+      - test/auto-update-pr
+
+
+
 jobs:
   test-auto-update-pr:
     runs-on: ubuntu-latest
