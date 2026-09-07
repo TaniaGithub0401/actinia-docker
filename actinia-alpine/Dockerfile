@@ -29,9 +29,6 @@ ENV ACTINIA_MODULE_PLUGIN_VERSION=2.11.0
 
 USER root
 
-# Set actinia-docker version
-COPY --from=version /actinia-docker-version.txt /
-
 # # ESA SNAP SETUP
 # ENV LD_LIBRARY_PATH ".:$LD_LIBRARY_PATH"
 # COPY --from=snap /root/.snap /root/.snap
@@ -63,6 +60,8 @@ RUN gdal-config --version && \
 # Full actinia image
 FROM compatibility-test AS final
 
+# Set actinia-docker version
+COPY --from=version /actinia-docker-version.txt /
 # GRASS GIS addons installation
 # git clone various openEO plugins (local checkout due to non-standard repo structure)
 RUN git clone https://github.com/mundialis/openeo-addons.git /src/openeo-addons
