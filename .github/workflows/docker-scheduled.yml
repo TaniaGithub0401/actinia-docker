@@ -72,9 +72,11 @@ jobs:
           fi
       - name: Create pull request
         if: steps.update_tag.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            actinia-alpine/Dockerfile
           commit-message: "Update alpine dependencies image tag"
           title: "Update alpine dependencies image tag to ${{ steps.meta.outputs.date }}"
           body: |

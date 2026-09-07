@@ -1,6 +1,6 @@
-ARG ALPINE_DEPENDENCIES_TAG=2026-08-14
+ARG ALPINE_DEPENDENCIES_TAG=2026-09-02
 
-FROM alpine:3.24 as version
+FROM alpine:3.24 AS version
 RUN apk add git
 
 COPY .git /src/actinia-docker/.git
@@ -14,7 +14,7 @@ FROM mundialis/esa-snap:s1tbx-d08c6d7 as snap
 
 
 # Compatibility test stage
-FROM base as compatibility-test
+FROM base AS compatibility-test
 
 LABEL authors="Carmen Tawalika,Anika Bettge,Markus Neteler,Sören Gebbert"
 LABEL maintainer="tawalika@mundialis.de,weinmann@mundialis.de,neteler@mundialis.de"
@@ -61,7 +61,7 @@ RUN gdal-config --version && \
 
 
 # Full actinia image
-FROM compatibility-test as final
+FROM compatibility-test AS final
 
 # GRASS GIS addons installation
 # git clone various openEO plugins (local checkout due to non-standard repo structure)
