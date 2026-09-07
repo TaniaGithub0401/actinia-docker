@@ -21,6 +21,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch upstream tags
+        run: |
+          git fetch --tags https://github.com/actinia-org/actinia-docker.git
+
       - name: Debug git tags
         run: |
           echo "Current commit:"
@@ -30,7 +34,7 @@ jobs:
           git tag --list
 
           echo "Git describe:"
-          git describe --tags --long --first-parent || true
+          git describe --tags --long --first-parent
 
           echo "Remotes:"
           git remote -v
