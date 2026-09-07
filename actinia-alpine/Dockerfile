@@ -1,4 +1,6 @@
-FROM alpine:3.23 as version
+ARG ALPINE_DEPENDENCIES_TAG=2026-09-02
+
+FROM alpine:3.24 AS version
 RUN apk add git
 
 COPY .git /src/actinia-docker/.git
