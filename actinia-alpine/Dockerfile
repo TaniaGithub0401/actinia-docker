@@ -8,7 +8,7 @@ WORKDIR /src/actinia-docker
 RUN git describe --dirty --tags --long --first-parent > /actinia-docker-version.txt
 
 
-FROM mundialis/actinia:alpine-dependencies-${ALPINE_DEPENDENCIES_TAG} AS base
+FROM mundialis/actinia:${ALPINE_DEPENDENCIES_TAG} AS base
 FROM osgeo/grass-gis:main-alpine AS grass
 FROM mundialis/esa-snap:s1tbx-d08c6d7 AS snap
 
