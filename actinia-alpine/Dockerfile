@@ -1,15 +1,20 @@
-FROM alpine:3.24 as version
+ARG ALPINE_DEPENDENCIES_TAG=alpine-dependencies-2026-09-02
+
+FROM alpine:3.24 AS version
 RUN apk add git
 
 COPY .git /src/actinia-docker/.git
 WORKDIR /src/actinia-docker
 RUN git describe --dirty --tags --long --first-parent > /actinia-docker-version.txt
 
-FROM mundialis/actinia:alpine-dependencies-2026-05-05 as base
-FROM osgeo/grass-gis:main-alpine as grass
-FROM mundialis/esa-snap:s1tbx-d08c6d7 as snap
 
-FROM base
+FROM mundialis/actinia:${ALPINE_DEPENDENCIES_TAG} AS base
+FROM osgeo/grass-gis:main-alpine AS grass
+FROM mundialis/esa-snap:s1tbx-d08c6d7 AS snap
+
+
+# Compatibility test stage
+FROM base AS compatibility-test
 
 LABEL authors="Carmen Tawalika,Anika Bettge,Markus Neteler,Sören Gebbert"
 LABEL maintainer="tawalika@mundialis.de,weinmann@mundialis.de,neteler@mundialis.de"
@@ -23,9 +28,6 @@ ENV ACTINIA_CORE_VERSION=7.1.1
 ENV ACTINIA_MODULE_PLUGIN_VERSION=2.11.0
 
 USER root
-
-# Set actinia-docker version
-COPY --from=version /actinia-docker-version.txt /
 
 # # ESA SNAP SETUP
 # ENV LD_LIBRARY_PATH ".:$LD_LIBRARY_PATH"
@@ -43,13 +45,23 @@ COPY --from=grass /usr/local/grass* /usr/local/grass/
 COPY --from=grass /usr/lib/gdalplugins/*_GRASS* /usr/lib/gdalplugins/
 COPY --from=grass /usr/local/grass/etc/proj/ /etc/proj/
 COPY --from=grass /usr/local/grass/etc/colors/ /etc/colors/
+
 RUN pip3 install --upgrade pip six grass-session --ignore-installed six
 # RUN ln -s /usr/local/grass `grass --config path`
 RUN ln -s /usr/local/grass /usr/local/grass86
-RUN grass --tmp-project EPSG:4326 --exec g.version -rge && \
+
+RUN gdal-config --version && \
+    ldd /usr/local/grass86/bin/g.proj | grep libgdal && \
+    grass --tmp-project EPSG:4326 --exec g.version -rge && \
     pdal --version && \
     python3 --version
 
+
+# Full actinia image
+FROM compatibility-test AS final
+
+# Set actinia-docker version
+COPY --from=version /actinia-docker-version.txt /
 # GRASS GIS addons installation
 # git clone various openEO plugins (local checkout due to non-standard repo structure)
 RUN git clone https://github.com/mundialis/openeo-addons.git /src/openeo-addons
